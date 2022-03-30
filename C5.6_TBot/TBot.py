@@ -1,20 +1,10 @@
-import requests
+#Данную работу сделал с помощью сервиса https://www.currate.ru/, т.к. функция конвертация валют в сервисе указанном
+#в техзадании  стала платной, 10 долларов платить задавила жаба
 import telebot
+from extensions import Converter, APIException, keys
+from config import TOKEN, keys
 
-#чтение токена из файла TOKEN.txt
-with open('TOKEN.txt','r') as f:
-    TOKEN = f.readline()
-
-#TOKEN = '5222765611:AAFz8nvJeqAPqeYeWyxXkwhfPYzXtMu7EQI'
 bot = telebot.TeleBot(TOKEN)
-
-keys = {
-    'эфириум':'ETH',
-    'биткоин':'BTC',
-    'доллар':'USD',
-    'евро':'EUR',
-    'рубль':'RUB'
-}
 
 @bot.message_handler(commands=['start', 'help'])
 def start(message: telebot.types.Message):
@@ -30,8 +20,14 @@ def values(message: telebot.types.Message):
         text = '\n'.join((text,key,))
     bot.reply_to(message, text)
 
-@bot.message_handler(type = ['text'])
+@bot.message_handler(content_types = ['text',])
 def answer(message: telebot.types.Message):
-    pass
+    values = message.text.split()
+    if len(values) > 3:
+        raise APIException('Слишком много параметров')
+    base, quote, amount = values
+    req = Converter.get_price(base, quote, amount)
+    text = req
+    bot.reply_to(message, text)
 
 bot.polling()
